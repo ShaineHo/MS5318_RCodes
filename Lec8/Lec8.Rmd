@@ -1,0 +1,61 @@
+---
+title: "Lec8_Regression"
+author: "HO Yin Shan"
+date: "2023-03-06"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = F,
+                      warning = F)
+library(tidyverse)
+```
+
+```{r}
+mall <- read_csv("mall_sales.csv")
+```
+
+```{r}
+mall %>% 
+  plot()
+```
+
+```{r}
+mall %>% 
+  PerformanceAnalytics::chart.Correlation()
+```
+
+```{r singleRegression}
+lm(Sales~Income, data = mall) %>% 
+  summary()
+```
+
+
+```{r}
+# g1
+g1 <- lm(Sales ~ ., data = mall)
+  summary(g1)
+
+# g2
+lm(Sales ~ Competitors, data = mall) %>% 
+  summary()
+
+# g3
+lm(Competitors ~ Income, data = mall) %>% 
+  summary()
+
+```
+
+
+```{r}
+newcase <- data.frame(Competitors=c(4,2),Income=c(70,60))
+predict(g1, newcase)
+
+newcase2 <- data.frame(Competitors=c(5,0,1),Income=c(75,60, 65))
+predict(g1, newcase2)
+```
+
+ˆ
