@@ -14,7 +14,7 @@ library(tidyverse)
 
 
 ```{r}
-mallsales <- read.csv("Lec9/mall_sales.csv")
+mallsales <- read_csv("mall_sales.csv")
 ```
 
 
