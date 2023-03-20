@@ -174,7 +174,7 @@ Q3. Fit a multiple regression model with all the six predictors
 retail2 <- retail1 %>% 
   select(-Income)
 
-model = lm(Profit~., data = retail2)
+model = lm(Profit~., data = retail1)
 summary(model)
 ```
 
@@ -187,28 +187,16 @@ vif(model)
 Q5. How would you adjust the model?  Track how the R-square changes when you drop predictors.  
 
 ```{r}
-model_1 = lm(Profit ~ `Disposable Income` + `Birth Rate` + `Soc Security` +  `CV Death`, data = retail2)
+model_1 = lm(Profit ~ `Income` + `Disposable Income` + `Birth Rate` + `Soc Security` +  `CV Death`, data = retail1)
 summary(model_1)
 vif(model_1)
 ```
 
-```{r}
-model_2 = lm(Profit ~ `Disposable Income` + `Birth Rate` + `Soc Security` +  `65 or Older`, data = retail2)
-summary(model_2)
-vif(model_2)
-```
 
 ```{r}
-model_3 = lm(Profit ~ `Disposable Income` +  +  `CV Death`, data = retail2)
+model_3 = lm(Profit ~ `Income` + `Disposable Income` + `Birth Rate`   +  `CV Death` +  `65 or Older` , data = retail1)
 summary(model_3)
 vif(model_3)
-```
-
-```{r}
-model_3 = lm(Profit ~ `Disposable Income` + `Birth Rate`   +  `CV Death` +  `65 or Older` , data = retail2)
-summary(model_3)
-vif(model_3)
-
 ```
 
 Ans: Remove Social security from comparing R-squared.
