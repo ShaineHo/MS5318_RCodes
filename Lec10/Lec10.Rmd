@@ -1,0 +1,19 @@
+---
+title: "Lec10"
+author: "HO Yin Shan"
+date: "2023-03-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+library(tidyverse)
+```
+
+```{r}
+capm <- read_csv("capm.csv")
+retail <- read_csv("retail_prof.csv")
+```
+
