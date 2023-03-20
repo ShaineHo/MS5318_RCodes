@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = F,
                       warning = F)
 library(tidyverse)
+library(ggfortify)
 ```
 
 
@@ -54,7 +55,7 @@ g1$fitted.values[1]-qt(0.025, 62)*68.03
 ## Exercise
 
 ```{r Q1}
-subprime <- read.csv("Lec9/subprime.csv")
+subprime <- read.csv("subprime.csv")
 ncol(subprime)
 nrow(subprime)
 dim(subprime)
