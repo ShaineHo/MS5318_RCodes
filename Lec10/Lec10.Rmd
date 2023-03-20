@@ -10,10 +10,84 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
                       warning = FALSE)
 library(tidyverse)
+library(ggfortify)
 ```
+
+
+```{r}
+subprime1 <- read_csv("subprime1.csv")
+```
+
+# Lec9 (13th Slides p18)
+
+Q1. Examine the relationship between each pair of variables numerically and visually.
+
+```{r}
+cor(subprime1)
+```
+
+```{r}
+plot(subprime1)
+```
+Q2. Fit a multiple regression model using all the variables to predict APR. Name the model g. Write down the fitted linear model.
+
+```{r}
+g <- lm(APR ~ LTV + FICO + `Stated Income` + `Home Value`, data = subprime1)
+summary(g)
+```
+
+APR = 23.7253652432 - 1.5888429952* LTV - 0.0184317607* FICO + 0.0004032124* Stated Income - 0.0007520823 *Home Value
+
+
+Q3. Make a residual plot of **𝑒** on **𝑌_bar**.
+
+```{r}
+plot(g$fitted, g$residuals)
+```
+
+Q4. Make a residual plot of **𝑒** on **FICO**.
+
+```{r}
+plot(subprime1$FICO, g$residuals)
+```
+Q5. Make a normal quantile plot of residuals (including the straight line) 
+
+```{r}
+#method 1
+autoplot(g)
+
+#method 2 
+qqnorm(g$residuals)
+qqline(g$residuals)
+```
+
+Q6. Make a histogram of the residuals.
+
+```{r}
+hist(g$residuals)
+```
+Q7. Does the four variables together explain statistically significant variation in APR?
+
+```{r}
+summary(g)
+# check F statistics (questions asked 4 variables together)
+```
+
+p-value: < 2.2e-16, for the whole model **(four variables together)**, the model is statistically significant.
+
+
+Q8. Is the effect of *Stated.Income* significant, given the values of the other three variables?
+
+No, because p-value is 0.9036.
+
+
+
+# Lec10
 
 ```{r}
 capm <- read_csv("capm.csv")
 retail <- read_csv("retail_prof.csv")
 ```
+
+
 
