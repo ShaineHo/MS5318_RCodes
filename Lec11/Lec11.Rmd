@@ -1,0 +1,21 @@
+---
+title: "Lec11"
+author: "HO Yin Shan"
+date: "2023-03-27"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+library(tidyverse)
+```
+
+
+```{r}
+
+```
+
