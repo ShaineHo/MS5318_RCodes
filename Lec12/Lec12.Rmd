@@ -6,25 +6,178 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                      message = F,
+                      warning = F)
+library(tidyverse)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+retail <- read.csv("retail_sales.csv")
+attach(retail)
 ```
 
-## Including Plots
+1. Use simple regression to predict sales using Market.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+model = lm(Sales ~ Market)
+summary(model)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+2. What are the predicted sales in each of the three
+markets?   
+
+Sales = 347.31 + 83.16 * MarketSuburban + 190.04 * MarketUrban   
+
+3. How to interpret the coefficients?   
+
+Rural = 347.31
+Suburban = 347.31 + 83.16
+Urban = 347.31 + 190.04 
+
+4. Is the difference in sales between different markets
+significant?   
+From the summary, the p-value is very small which indicate it is significant.
+
+5. Make a scatterplot (sales vs. income) of the three
+groups of Market. Add the legend to the plot.
+
+```{r}
+retail %>% 
+  ggplot(aes(x = Income, y = Sales, color = Market)) +
+  geom_point()+
+# facet_wrap(~Market)+
+  theme_classic()
+```
+
+```{r}
+model1 = lm(Sales~ Income + Market + Income*Market)
+summary(model1)
+```
+
+Sales = -172.694 + Income * 8.313 + MarketSuburban * 418.245 + MarketUrban * 441.399 - Income * MarketSuburban * 5.997 - Income * MarketUrban * 4.516   
+
+Rural: Sales = -172.694 + 418.245 + (8.313 - 5.997) * Income   
+Rural: Sales = -172.694 + 441.399 + (8.313 - 4.516) * Income   
+
+```{r}
+newcase = data.frame(Income = 72, Market = "Urban")
+predict(model1, newcase)
+```
+
+```{r}
+retail %>% 
+  ggplot(aes(x = Income, y = Sales, color = Market)) +
+  geom_point()+
+ #facet_wrap(~Market, ncol = 1)+
+  theme_classic()+
+  geom_smooth(method = "lm" , se = F)
+```
+
+
+```{r}
+summary(model1)
+```
+
+Because p-value of MarketSuburban is 0.05988 which is greater than 0.05. Therefore it is statistically indifferent to 0 as it is statistically random variable.
+
+
+#################################################
+
+```{r}
+movies <- read.csv("movies.csv")
+attach(movies)
+```
+
+```{r}
+plot(Profit ~ LOpening)
+
+f = lm(Profit ~ LOpening)
+summary(f)
+```
+
+```{r}
+logit <- glm(Profit~LOpening, family="binomial")
+
+summary(logit)
+```
+
+log(p/1-p) = -3.1656 + 1.3082 * LOpening
+
+newmovie = 4
+
+log(p/1-p) = -3.1656 + 1.3082 * 4 = 2.067197
+
+e^2.067197/(1+e^2.067197) = 0.8876738
+
+```{r}
+newmovie = data.frame(LOpening = 4)
+predict(logit, newmovie, type = "response")
+```
+
+```{r}
+plot(LOpening, Profit)
+predicted = predict(logit, movies, type = "response")
+points(LOpening, predicted, col = 2, pch =2)
+```
+
+```{r}
+logit1 <- glm(Profit ~ LOpening + Theaters + Opinion, family = "binomial") 
+summary(logit1)
+```
+
+
+```{r}
+pchisq(47.111 - 34.396, 34-31, lower.tail = F)
+```
+
+
+2. When there is 1 unit increase in LOpening, there will be 2.1463588 increase in log odds.
+
+```{r}
+logit2 <- update(logit1, .~. - Opinion) 
+  summary(logit2)
+```
+
+```{r}
+# calcuating p-value
+pchisq(47.111 - 34.455, 34-32, lower.tail = F)
+```
+
+```{r}
+logit3 <- update(logit1, .~. - Opinion - Theaters) 
+  summary(logit3)
+```
+
+```{r}
+# calcuating p-value
+pchisq(47.111 - 35.708, 34-33, lower.tail = F)
+```
+
+###########################################
+
+```{r}
+flight <- read.csv("FlightDelays.csv")
+attach(flight)
+```
+
+```{r}
+flight <- flight %>% 
+  mutate(schedtime = as.factor(schedtime),
+         dayweek = as.factor(dayweek)) %>% 
+  select(-date, -flightnumber, -daymonth, -distance)
+```
+
+```{r}
+flightlogit <- glm(delay~., data = flight, family = "binomial")  
+  summary(flightlogit)
+```
+
+```{r}
+# scheduletime and dayweek are categorical variables!!! use " " 
+newflight = data.frame(dest = "EWR", origin = "IAD", carrier= "UA", schedtime = "15", weather = 0, dayweek = "2")
+predict(flightlogit, newflight, type = "response")
+```
+
+
