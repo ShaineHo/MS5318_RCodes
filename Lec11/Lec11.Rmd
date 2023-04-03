@@ -4,7 +4,6 @@ author: "HO Yin Shan"
 date: "2023-03-27"
 output:
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +15,79 @@ library(tidyverse)
 
 
 ```{r}
+cars <- read.csv("cars.csv", header = T)
+attach(cars)
+model <- lm(MPG ~ Weight)
+summary(model)
+```
+
+```{r}
+plot(Weight ,MPG)
+abline(model$coefficients, col ="red")
+```
+
+
+```{r}
+GPM = 1/MPG
+model1 <- lm(GPM~Weight)
+summary(model1)
+# Do not compare with the R-sqaure!!! 
+# Because they r different data
+```
+
+```{r}
+plot(Weight, GPM, pch = 2)
+abline(model1$coefficients, col = "red")
+```
+# Lec method
+
+```{r}
+# linear equation
+  g = lm(MPG~Weight)  
+# reciprocal equation
+  g1 = lm(GPM~Weight) 
+# plot raw data
+  plot(Weight, MPG) 
+# add fitted line from linear equation
+  abline(g$coefficients, col = "red")
+# predicted MPG from reciprocal equation
+  g1.pred = 1/g1$fitted.values
+# sort the data by weight
+  h <- order(Weight)
+# h contains the order of the observations by Weight
+# add the fitted curve from reciprocal equation
+  lines(Weight[h], g1.pred[h], col="blue")
+```
+
+
+
+# own method
+```{r}
+# arrange weight first before plotting
+cars <- cars %>% 
+  mutate(pred_MPG = 1/model1$fitted.values) %>% 
+  arrange(Weight)
+ # h = order(cars$Weight)
+
+plot(cars$Weight, cars$MPG)
+lines(cars$Weight, cars$pred_MPG, col = "blue")
+abline(model$coefficients, col = "red")
+```
+
+```{r}
+newdata <- data.frame(Weight = c(5, 4.8))
+pred <- 1/predict(model1, newdata)
+pred
+pred[2]-pred[1]
+```
+
+```{r}
+# linear equation
+(-0.2)*model$coefficients[2]
+# reciprocal equation
+newcase = data.frame(Weight=c(5, 4.8))
+pred.mpg = 1/predict(model1, newcase)
+pred.mpg[2]-pred.mpg[1]
 
 ```
 

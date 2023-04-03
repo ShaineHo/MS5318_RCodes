@@ -1,0 +1,146 @@
+---
+title: "MS5318 Homework 3"
+author: "HO Yin Shan (57487297)"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+```{r}
+# library packages & read data
+library(tidyverse)
+home_prices <- read.csv("home_prices.csv")
+```
+
+**Question 1**
+
+What are the mean and median home price in the data set?  
+
+```{r}
+summary(home_prices$Price)
+```
+
+Mean home price : 322.8 thousands  
+Median home price: 318 thousands  
+
+**Question 2**  
+
+Make a histogram of the response variable Price.  When you use the R function hist(), include the following arguments:  breaks=15, xlab="Home Price", ylab="Counts", col="grey". Use comma to separate different arguments in the R function. Try to understand the meanings of those arguments.     
+
+```{r out.height="70%", out.width= "70%"}
+hist(home_prices$Price,
+     breaks = 15, xlab = "Home Price", col = "grey",
+     ylab = "Count", main = "Histogram of Home Prices")
+```
+
+**Question 3**
+
+Examine the scatterplots of the pairs of variables in the data set. Attach the scatterplots to this assignment.  
+
+```{r out.height="55%", out.width= "55%"}
+PerformanceAnalytics::chart.Correlation(home_prices)
+```
+
+Square Feet has **strong positive correlation** with home prices. Number of bathrooms, Lot size and Median Income shows a **moderate positive correlation*** with price. Number of bathrooms shows a **strong positive correlation** to Square Feet. Lot size and median income shows **moderate positive correlation** to Square Feet. Bathrooms, Lot Size and Median shows **weak positive correlation** to each others.  
+
+**Question 4**  
+
+Fit a multiple regression model, using all four explanatory variables. Include the model summary in your submission (e.g. estimated coefficients, p-value, F-test results, etc.).
+
+```{r}
+model <- lm(Price ~ . ,data = home_prices)
+summary(model)
+```
+
+**Question 5**
+
+Does the estimated model appear to meet the conditions of multiple regression model?  (Check model conditions: residual plots, normal quantile plot.)
+
+```{r out.height="70%", out.width= "70%"}
+plot(home_prices$Sq.Feet, model$residuals,
+     ylab = "residuals", xlab = "Sq Feet", 
+     main = "Scatter plot of residuals and Sq feet")
+
+plot(home_prices$Bathrooms, model$residuals,
+     ylab = "residuals", xlab = "Bathrooms", 
+     main = "Scatter plot of residuals and Bathrooms")
+```
+
+\pagebreak
+
+```{r out.height="70%", out.width= "70%"}
+plot(home_prices$Lot.Size , model$residuals,
+     ylab = "residuals", xlab = "Lot Size", 
+     main = "Scatter plot of residuals and Lot Size")
+
+plot(home_prices$Median.Income, model$residuals,
+     ylab = "residuals", xlab = "Median Income", 
+     main = "Scatter plot of residuals and Median Income")
+```
+
+\pagebreak
+
+```{r out.height="75%", out.width= "75%"}
+qqnorm(model$residuals, main = "Q-Q plot")
+qqline(model$residuals)
+```
+
+Based on the plots, it appears that to basically meet the conditions of multiple regression model. From the **residual plots**, it is found that it is basically even distributed.  
+In addition, from the **qq-plot** it is fount that the data **most of the data fitted well except some from the tails**.   
+
+
+### Question 6   
+
+
+Does this model explain statistically significant variation in the prices of homes? Give your reasons.  
+
+Based on the model summary, the **p-value** of the whole model is < 2.2e-16. Which shows that the model shows statistically significant variation in the prices of homes.   
+In addition, from the **Multiple R-squared**, it  shows that the **dependent variables can explain 58.99% of the price**.   
+
+
+### Question 7   
+
+
+Interpret the estimated coefficient for Sq.Feet. What does this coefficient mean?  What does its p-value mean?  
+
+The coefficient of Sq.Feet is 31.27315. It means that **when there is increase in 1000 square feet, the home price will increase for 31.2732 thousands when all other variables are unchanged**. It's **p-value is 2.31e-06** that the **variable is statistically significant**.   
+
+\pagebreak
+
+
+**Question 8**
+
+Compare the marginal coefficient for the number of bathrooms to the partial coefficient.  Explain why these are so different. 
+
+```{r}
+lm(Price~ Bathrooms, data = home_prices) %>% 
+  summary()
+```
+
+According to the summary above, the **marginal coefficient of Bathrooms to Price is 82.317**. However, the **partial coefficient is 15.55418**. The reason of such differences is that the marginal regression only consider bathroom as the only coefficient which may over estimate the effect of the bathrooms. However, the full model consider other variables' effects on the home prices.
+
+**Question 9**
+
+A homeowner wants to sell her home with: Sq.Feet = 3, Bathrooms=3, Lot.Size=9, Median.Income= 10. Give a 95% prediction interval for the price of her home.  
+
+```{r}
+new_data <- 
+  data_frame(Sq.Feet = 3, Bathrooms = 3, 
+             Lot.Size = 9, Median.Income = 10)
+predict.lm(model, new_data,
+           interval = "prediction", 
+           level = 0.95)
+```
+
+The predicted price of her home is [123.8469, 432.9444]thousand. 
+
+**Question 10**
+
+A homeowner asked the realtor if she should spend $40,000 to convert a walk-in closet into a small bathroom in order to increase the sale price of her home. What does your analysis indicate?
+
+Based on the analysis, it is found that when the number of bathrooms increase by 1, keeping all other variables unchanged, the home price would increase for 15.55418 thousands. However, converting a the closet into bathroom required 40 thousands which doesn't worth as it is more expensive than the price increase.
