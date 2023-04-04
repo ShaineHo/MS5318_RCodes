@@ -1,0 +1,72 @@
+---
+title: "project"
+author: "HO Yin Shan"
+date: "2023-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = F,
+                      warning = F)
+library(tidyverse)
+```
+
+
+```{r}
+titanic <- read_csv("~/Desktop/titanic.csv")
+
+t <- titanic %>% 
+  extract(Name, into = "Title", reg =' ([A-Za-z]+)\\.')
+
+unique(t$Title)
+
+
+            
+              
+highrank <-   filter(t, !Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>% 
+    select(-Title) %>% 
+    cbind(data.frame(Title = c(rep("HighRank",66))))
+
+clean <- filter(t, Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>% 
+  rbind(highrank) %>% 
+  arrange(PassengerId) %>% 
+  select(-Cabin) %>% 
+  na.omit() %>% 
+  select(-Ticket, -PassengerId) %>% 
+  mutate(Pclass = as.factor(Pclass))
+
+clean[356, "Title"] = "Miss"
+```
+
+```{r}
+sample <- sample(c(TRUE, FALSE), nrow(clean), replace=TRUE, prob=c(0.8,0.2))
+train  <- clean[sample, ]
+test   <- clean[!sample, ]
+```
+
+```{r}
+train %>% 
+  mutate(class = as.factor(Pclass))
+model1 <- glm(Survived~., data = train, family = "binomial") 
+  summary(model1)
+```
+
+```{r}
+pchisq(751.16 - 476.27, 545-533, lower.tail = F)
+```
+
+```{r}
+model2 <- update(model1, .~. - Fare) 
+summary(model2)
+```
+
+```{r}
+model3 <- update(model2, .~. - Sex) 
+summary(model3)
+```
+
+```{r}
+predmodel3
+```
+
