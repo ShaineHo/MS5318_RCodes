@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = F,
                       warning = F)
 library(tidyverse)
+library(plotly)
 ```
 
 ## data cleaning
@@ -32,7 +33,8 @@ clean <- filter(t, Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>%
   select(-Cabin) %>% 
   na.omit() %>% 
   select(-Ticket, -PassengerId) %>% 
-  mutate(Pclass = as.factor(Pclass))
+  mutate(Pclass = as.factor(Pclass),
+         Survived = as.logical(Survived))
 
 clean[356, "Title"] = "Miss"
 ```
@@ -72,16 +74,21 @@ model2 <- update(model1, .~. - Sex)
 summary(model2)
 ```
 
+```{r}
+car::vif(model2)
+```
+
+
 # remove fare (highest p-value)
 
-```{r}
+```{r eval = F}
 model3 <- update(model2, .~. - Fare) 
 summary(model3)
 ```
 
 
 ```{r}
-model4 <- update(model3, .~. -Embarked)
+model4 <- update(model2, .~. -Embarked)
 summary(model4)
 ```
 
@@ -97,7 +104,7 @@ pchisq(647.45- 386.96, 482-475, lower.tail = F )
 
 
 ```{r}
-predict(model5, test, type = "response") %>% 
+predict(model3, test, type = "response") %>% 
   as.data.frame() %>% 
   rename("Prediction" = ".") %>% 
   mutate(pred.survival = (Prediction > 0.5)) %>% 
@@ -111,4 +118,55 @@ predict(model5, test, type = "response") %>%
 Comparing with AIC, model 5 got the smallest. As AIC refers to goodness of fit of the model and penalizing the complexity of the model. The smaller the AIC the better the model. In addition to the accuracy of prediction, model5 was chosen.
 
 
+```{r}
+visdat::vis_dat(titanic, palette = "cb_safe")+
+  labs(title = "Raw Data Visualization")
+
+visdat::vis_dat(clean, palette = "cb_safe")+
+  labs(title = "Cleaned Data Visualization")
+```
+
+```{r}
+clean %>% 
+  select(Age, SibSp, Parch, Fare, Survived) %>% 
+  cor() %>% 
+corrplot::corrplot()
+```
+
+```{r}
+clean %>% 
+ggplot(aes(x = Pclass, y = Fare, fill = Pclass))+
+  geom_boxplot()+
+  facet_wrap(~Pclass, scale ="free_y")+
+  theme_bw() +
+  scale_fill_brewer(palette = "Set1")
+  ggplotly()
+```
+
+```{r}
+clean %>%
+  group_by(Age, Sex, Survived) %>% 
+  ggplot(aes(x = Age, fill = Survived))+
+  geom_histogram()+
+  facet_wrap(~Sex)+
+  labs(title = "Number of surival by Age and Gender")+
+  scale_fill_brewer(palette = "Set1")+
+  theme_test()
+```
+
+```{r}
+clean %>%
+  group_by(Pclass, Survived, Sex) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(Pclass, Sex) %>% 
+  mutate(surv_prop = n/sum(n)) %>% 
+  ggplot(aes(x = Pclass, y = surv_prop, fill = Survived))+
+  geom_col()+
+  facet_wrap(~Sex)+
+  labs(title = "Number of surival by Passenger Class and Gender",
+       y = "Probability", x = "Class")+
+  scale_fill_brewer(palette="Set1")+
+  theme_test()
+```
 
