@@ -12,22 +12,20 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 ```
 
+## data cleaning
 
 ```{r}
-titanic <- read_csv("~/Desktop/titanic.csv")
+titanic <- read_csv("titanic.csv")
 
+# extract the title
 t <- titanic %>% 
   extract(Name, into = "Title", reg =' ([A-Za-z]+)\\.')
 
-unique(t$Title)
-
-
-            
-              
+# combine the high-ranking title
 highrank <-   filter(t, !Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>% 
     select(-Title) %>% 
     cbind(data.frame(Title = c(rep("HighRank",66))))
-
+  
 clean <- filter(t, Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>% 
   rbind(highrank) %>% 
   arrange(PassengerId) %>% 
@@ -39,34 +37,78 @@ clean <- filter(t, Title %in% c("Mr", "Mrs", "Miss", "Ms")) %>%
 clean[356, "Title"] = "Miss"
 ```
 
+# split data by train 0.8, test 0.2
+
 ```{r}
+set.seed(5318)
 sample <- sample(c(TRUE, FALSE), nrow(clean), replace=TRUE, prob=c(0.8,0.2))
 train  <- clean[sample, ]
 test   <- clean[!sample, ]
 ```
 
+# fit with all variables
+
 ```{r}
-train %>% 
-  mutate(class = as.factor(Pclass))
 model1 <- glm(Survived~., data = train, family = "binomial") 
   summary(model1)
 ```
 
-```{r}
-pchisq(751.16 - 476.27, 545-533, lower.tail = F)
-```
+# check p-value of model
 
 ```{r}
-model2 <- update(model1, .~. - Fare) 
+pchisq(762 - 456.89, 568-556, lower.tail = F)
+```
+
+# collinearity test
+
+```{r}
+car::vif(model1)
+```
+
+# Remove sex
+
+```{r}
+model2 <- update(model1, .~. - Sex) 
 summary(model2)
 ```
 
+# remove fare (highest p-value)
+
 ```{r}
-model3 <- update(model2, .~. - Sex) 
+model3 <- update(model2, .~. - Fare) 
 summary(model3)
 ```
 
+
 ```{r}
-predmodel3
+model4 <- update(model3, .~. -Embarked)
+summary(model4)
 ```
+
+```{r}
+model5 <- update(model4, .~. -Parch)
+summary(model5)
+```
+
+```{r}
+pchisq(647.45- 386.96, 482-475, lower.tail = F )
+```
+
+
+
+```{r}
+predict(model5, test, type = "response") %>% 
+  as.data.frame() %>% 
+  rename("Prediction" = ".") %>% 
+  mutate(pred.survival = (Prediction > 0.5)) %>% 
+  cbind(test) %>% 
+  select(pred.survival, Survived) %>% 
+  mutate(accurate = (pred.survival == Survived)) %>% 
+  group_by(accurate) %>% 
+  count()
+```
+
+Comparing with AIC, model 5 got the smallest. As AIC refers to goodness of fit of the model and penalizing the complexity of the model. The smaller the AIC the better the model. In addition to the accuracy of prediction, model5 was chosen.
+
+
 
