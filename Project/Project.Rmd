@@ -17,7 +17,12 @@ library(plotly)
 
 ```{r}
 titanic <- read_csv("titanic.csv")
+visdat::vis_dat(titanic, palette = "cb_safe")+
+  labs(title = "Raw Data Visualization")
+```
 
+
+```{r}
 # extract the title
 t <- titanic %>% 
   extract(Name, into = "Title", reg =' ([A-Za-z]+)\\.')
@@ -41,7 +46,7 @@ clean[356, "Title"] = "Miss"
 
 # split data by train 0.8, test 0.2
 
-```{r}
+```{r eval = F}
 set.seed(5318)
 sample <- sample(c(TRUE, FALSE), nrow(clean), replace=TRUE, prob=c(0.8,0.2))
 train  <- clean[sample, ]
@@ -75,20 +80,36 @@ summary(model2)
 ```
 
 ```{r}
-car::vif(model2)
-```
-
-
-# remove fare (highest p-value)
-
-```{r eval = F}
-model3 <- update(model2, .~. - Fare) 
-summary(model3)
+pchisq(762 - 466.43, 568-557, lower.tail = F)
 ```
 
 
 ```{r}
-model4 <- update(model2, .~. -Embarked)
+car::vif(model2)
+```
+
+```{r}
+step(model2,direction = "backward", criteria = "AIC")
+```
+
+
+```{r include = F}
+model3 <- update(model2, .~. - Fare) 
+summary(model3)
+```
+
+```{r include = F}
+update(model2, .~. - Parch) %>% summary()
+```
+
+```{r include = F}
+update(model2, .~. - Embarked) %>% summary()
+```
+
+
+
+```{r include = F}
+model4 <- update(model3, .~. -Embarked)
 summary(model4)
 ```
 
@@ -98,13 +119,13 @@ summary(model5)
 ```
 
 ```{r}
-pchisq(647.45- 386.96, 482-475, lower.tail = F )
+pchisq(762.00- 470.75, 568-561, lower.tail = F )
 ```
 
 
 
 ```{r}
-predict(model3, test, type = "response") %>% 
+predict(model2, test, type = "response") %>% 
   as.data.frame() %>% 
   rename("Prediction" = ".") %>% 
   mutate(pred.survival = (Prediction > 0.5)) %>% 
@@ -113,15 +134,51 @@ predict(model3, test, type = "response") %>%
   mutate(accurate = (pred.survival == Survived)) %>% 
   group_by(accurate) %>% 
   count()
+
+predict(model5, test, type = "response") %>% 
+  as.data.frame() %>% 
+  rename("Prediction" = ".") %>% 
+  mutate(pred.survival = (Prediction > 0.5)) %>% 
+  cbind(test) %>% 
+  select(pred.survival, Survived) %>% 
+  mutate(accurate = (pred.survival == Survived)) %>% 
+  group_by(accurate) %>% 
+  count()
+
+# model 2
+118/(25+118)
+
+# model 5 
+120/(120+23)
 ```
 
 Comparing with AIC, model 5 got the smallest. As AIC refers to goodness of fit of the model and penalizing the complexity of the model. The smaller the AIC the better the model. In addition to the accuracy of prediction, model5 was chosen.
 
 
 ```{r}
-visdat::vis_dat(titanic, palette = "cb_safe")+
-  labs(title = "Raw Data Visualization")
+predict(model3, clean, type = "response") %>% 
+  as.data.frame() %>% 
+  rename("Prediction" = ".") %>% 
+  mutate(pred.survival = (Prediction > 0.5)) %>% 
+  cbind(clean) %>% 
+  select(pred.survival, Survived) %>% 
+  mutate(accurate = (pred.survival == Survived)) %>% 
+  group_by(accurate) %>% 
+  count()
 
+predict(model3, clean, type = "response") %>% 
+  as.data.frame() %>% 
+  rename("Prediction" = ".") %>% 
+  mutate(pred.survival = (Prediction > 0.5)) %>% 
+  cbind(clean) %>% 
+  select(pred.survival, Survived) %>% 
+  mutate(accurate = (pred.survival == Survived)) %>% 
+  group_by(accurate) %>% 
+  count()
+```
+
+
+```{r}
 visdat::vis_dat(clean, palette = "cb_safe")+
   labs(title = "Cleaned Data Visualization")
 ```
@@ -169,4 +226,232 @@ clean %>%
   scale_fill_brewer(palette="Set1")+
   theme_test()
 ```
+
+
+
+
+```{r}
+################### Data ###################
+clean$Survived <- as.character(clean$Survived)
+
+# Plot all variable, but there are too many categorical variable.
+plot(clean)
+```
+
+
+```{r}
+# Histogram of variables
+clean2 <- clean[,-c(2,3,4,9)] 
+clean2$Survived <-as.numeric(clean2$Survived)
+
+clean2 %>% 
+  select(-Survived) %>% 
+  PerformanceAnalytics::chart.Correlation()
+```
+
+
+```{r}
+# Age & Sex histogram
+ggplot(data=clean, mapping =aes (x=Age, fill=Sex)) +
+  geom_histogram(binwidth=5)+facet_wrap(~Survived)
+```
+
+
+```{r}
+# Fare & Sex histogram
+ggplot(data=clean, mapping =aes (x=Fare, fill=Sex)) +
+  geom_histogram(binwidth=20)+facet_wrap(~Survived)
+```
+
+
+```{r}
+# SibSp histogram
+ggplot(data=clean, mapping =aes (x=SibSp, fill=Survived)) +
+  geom_histogram(binwidth=1)
+```
+
+
+```{r}
+# Title barplot
+ggplot(clean, aes(x=Title, fill=Survived)) +geom_bar()
+```
+
+
+```{r}
+# Embarked barplot
+ggplot(clean, aes(x=Embarked, fill=Survived)) +geom_bar(position='dodge')
+```
+
+
+```{r}
+# Parch barplot
+ggplot(clean, aes(x=Parch, fill=Survived)) +geom_bar()
+```
+
+
+```{r}
+################### Model 5 ###################
+
+plot(model5$fitted.values, model5$residuals) 
+plot(train$Age, model5$residuals) 
+identify(train$Age , model5$residuals) 
+
+plot(train$Fare , model5$residuals) 
+identify(train$Fare , model5$residuals) 
+
+plot(train$SibSp , model5$residuals) 
+plot(train$Parch , model5$residuals)
+```
+
+
+```{r}
+# QQplot (useless for logistic regression)
+qqnorm(model5$residuals)
+qqline(model5$residuals)
+```
+
+
+```{r}
+# Residual Histogram
+hist(model5$residuals)
+```
+
+
+```{r}
+# Residual plot 
+# We discovered 3 outlier which are no. obs 202, 266, 323
+plot(model5$fitted.values, model5$residuals) 
+identify(model5$fitted.values, model5$residuals) 
+train[c(202,266,323),]
+
+# obs 202 passengers ID = 298
+# Name: Allison, Miss. Helen Loraine
+# Age: 2
+# Fare: 152
+# Survived: 0
+```
+
+
+```{r}
+p_298 <- titanic %>% filter (PassengerId == 298)
+p_298
+
+# obs 266 passengers ID = 401
+p_401 <- titanic %>% filter (PassengerId == 401)
+View(p_401)
+
+# obs 323 passengers ID = 499
+p_499 <- titanic %>% filter (PassengerId == 499)
+View(p_298)
+
+```
+
+
+```{r}
+# Age & Sex histogram
+ggplot(data=clean, mapping =aes (x=Age, fill=Sex)) +
+  geom_histogram(binwidth=5)+facet_wrap(~Survived) +  
+  ggtitle("Survivor by Age & Gender")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Set1")
+```
+
+```{r}
+clean$Survived = as.factor(clean$Survived)
+# Fare & Sex histogram
+clean %>% 
+ggplot(aes(x = Survived, y = Fare, fill = Sex))+
+  geom_boxplot()+
+  theme_bw() +
+  ggtitle("Survivors by Gender & Fare")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Set1")
+```
+
+```{r}
+# Title barplot
+ggplot(clean, aes(x=Title, fill=Survived)) +geom_bar()+
+  ggtitle("Survivors' Title")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Set1")
+```
+
+```{r}
+clean %>%
+  group_by(SibSp, Survived, Sex) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(SibSp, Sex) %>% 
+  mutate(surv_prop = n/sum(n)) %>% 
+  ggplot(aes(x = SibSp, y = surv_prop, fill = Survived))+
+  geom_col()+
+  facet_wrap(~Sex)+
+  labs(title = "No. of survivors by Gender and no. siblings/spouses on board",
+       y = "Probability", x = "No. of siblings/spouses on board")+
+  scale_fill_brewer(palette="Set1")+
+  theme_test()
+```
+
+```{r}
+clean %>%
+  group_by(Parch, Survived, Sex) %>% 
+  count() %>% 
+  ungroup() %>% 
+  group_by(Parch, Sex) %>% 
+  mutate(surv_prop = n/sum(n)) %>% 
+  ggplot(aes(x = Parch, y = surv_prop, fill = Survived))+
+  geom_col()+
+  facet_wrap(~Sex)+
+  labs(title = "No. of survivors by Gender and no. of parents/children on board",
+       y = "Probability", x = "No. of parents/children on board")+
+  scale_fill_brewer(palette="Set1")+
+  theme_test()
+```
+
+```{r}
+################### Model 5 ###################
+
+plot(model5$fitted.values, model5$residuals) 
+plot(train$Age, model5$residuals) 
+identify(train$Age , model5$residuals) 
+
+plot(train$Fare , model5$residuals) 
+identify(train$Fare , model5$residuals) 
+
+plot(train$SibSp , model5$residuals) 
+plot(train$Parch , model5$residuals)
+```
+
+
+```{r}
+# QQplot (useless for logistic regression)
+qqnorm(model5$residuals)
+qqline(model5$residuals)
+```
+
+
+```{r}
+# Residual Histogram
+hist(model5$residuals)
+```
+
+
+```{r}
+# Residual plot 
+# We discovered 3 outlier which are no. obs 202, 266, 323
+plot(model5$fitted.values, model5$residuals) 
+identify(model5$fitted.values, model5$residuals) 
+train[c(202,266,323),]
+
+# obs 202 passengers ID = 298
+# Name: Allison, Miss. Helen Loraine
+# Age: 2
+# Fare: 152
+# Survived: 0
+```
+
+
+
+
+
 

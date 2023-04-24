@@ -2,7 +2,9 @@
 title: "MS5318_Assignment4"
 author: "HO Yin Shan (57487297)"
 date: "2023-04-04"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +14,90 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 ```
 
+Question 1   
+
 ```{r}
-convenience <-  read.csv("convenience.csv")
+convenience <-  read_csv("convenience.csv")
 ```
 
+(a) The manager of the chain wants to compare the sales performance of the two service stations.  Is it appropriate for him/her to conclude based on only a two-sample t-test on the sales?  Would such a comparison be confounded by different levels of traffic (as measured by the volume of gas sold)?    
+
+It is not appropriate to make conclusion based on a two-sample t-test on the sales. And such a comparison will be confounded by different levels of traffic.   
+
+(b) Perform the two-sample t-test to compare the sales of the two service stations.  Summarize this analysis, assuming that there are no confounding variables.  (You may run a linear regression to perform the two-sample t-test.)   
+
+```{r}
+S1_data <- convenience %>% 
+  filter(Site == "Site 1")
+
+S2_data <- convenience %>% 
+  filter(Site == "Site 2")
+```
+
+method 1   
+
+```{r}
+t.test(S1_data$Sales, S2_data$Sales)
+```
+
+\pagebreak
+
+method 2   
+
+```{r}
+lm(Sales~Site, data = convenience) %>% 
+  summary()
+```
+
+Based on the t-test and the regression coefficients, it is found that the station in Site 2 has 727.21 dollar sales of gases than Site 1.
+
+(c) Compare the sales of the two stations while including Volume in the analysis. Summarize the comparison of sales based on this analysis.  (Assume for the moment that the model meets the conditions for the multiple regression model.)
+
+```{r}
+lm(Sales ~ ., data = convenience) %>% 
+  summary()
+```
+
+Based on the regression result, it is found that the sales of the gases in Site 2 is 520.42 dollar less than Site 1 even when keeping all other variable unchanged. This means that even considering the volume of sales, the sales are still different.
+
+
+(d) Compare the results from parts (b) and (c).  Do they agree?  Explain why they agree or differ. 
+You should take into account the precision of the estimates and your answer to part (a).
+
+
+```{r}
+convenience %>% 
+  group_by(Site) %>% 
+  summarise(avg_price = mean(Sales/Volume))
+```
+Based on the regression result, it is found that the sales of the two Sites are different even considering the volume of Sales. According to the calculation, the reason of the different is probably because of the price of the gases at the two sites are different.
+
+Question 2   
+
+(a)
+
+```{r}
+univeralbank <- read_csv("UniversalBank.csv")
+#change the datatype of Education and Family from to category
+univeralbank <- univeralbank %>% 
+  mutate(Education = as.factor(Education),
+         Family = as.factor(Family))
+head(univeralbank,3)
+```
+
+\pagebreak
+
+```{r}
+model <- glm(PersonalLoan~., family="binomial", data = univeralbank)
+summary(model)
+```
+
+(b)
+
+```{r}
+new_data <- data.frame(Age=33, Experience=8, Income=85, Family=as.factor(3), Education=as.factor(2), Mortgage=0, CCAvg=1.1) 
+
+predict(model, new_data, type = "response")
+```
+
+The probability of loan acceptance is 15.78%.
