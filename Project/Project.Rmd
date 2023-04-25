@@ -46,7 +46,7 @@ clean[356, "Title"] = "Miss"
 
 # split data by train 0.8, test 0.2
 
-```{r eval = F}
+```{r eval = T}
 set.seed(5318)
 sample <- sample(c(TRUE, FALSE), nrow(clean), replace=TRUE, prob=c(0.8,0.2))
 train  <- clean[sample, ]
